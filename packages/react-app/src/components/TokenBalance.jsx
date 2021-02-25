@@ -3,7 +3,7 @@ import { formatEther } from "@ethersproject/units";
 import { useTokenBalance } from "eth-hooks";
 
 export default function TokenBalance(props) {
-  const [dollarMode, setDollarMode] = useState(true);
+  const [dollarMode, setDollarMode] = useState(false);
 
   const tokenContract = props.contracts && props.contracts[props.name];
   const balance = useTokenBalance(tokenContract, props.address, 1777);
@@ -22,10 +22,10 @@ export default function TokenBalance(props) {
     floatBalance = parseFloat(etherBalance);
   }
 
-  let displayBalance = floatBalance.toFixed(4);
+  let displayBalance = floatBalance.toLocaleString('es-es');
 
   if (props.dollarMultiplier && dollarMode) {
-    displayBalance = "$" + (floatBalance * props.dollarMultiplier).toFixed(2);
+    displayBalance = "$" + (floatBalance * props.dollarMultiplier).toLocaleString('es-es');
   }
 
   return (
@@ -40,7 +40,7 @@ export default function TokenBalance(props) {
         setDollarMode(!dollarMode);
       }}
     >
-      {props.img} {displayBalance}
+      {displayBalance} {props.img} {props.name}
     </span>
   );
 }

@@ -50,7 +50,6 @@ export default function useContractReader(contracts, contractName, functionName,
         if (formatter && typeof formatter === "function") {
           newValue = formatter(newValue);
         }
-        // console.log("GOT VALUE",newValue)
         if (newValue !== value) {
           setValue(newValue);
         }

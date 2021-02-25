@@ -30,7 +30,7 @@ import { usePoller } from "eth-hooks";
 
 
 export default function Balance(props) {
-  const [dollarMode, setDollarMode] = useState(true);
+  const [dollarMode, setDollarMode] = useState(false);
   const [balance, setBalance] = useState();
 
   const getBalance = async () => {
@@ -68,12 +68,12 @@ export default function Balance(props) {
     floatBalance = parseFloat(etherBalance);
   }
 
-  let displayBalance = floatBalance.toFixed(4);
+  let displayBalance = floatBalance.toLocaleString();
 
   const price = props.price || props.dollarMultiplier
 
   if (price && dollarMode) {
-    displayBalance = "$" + (floatBalance * price).toFixed(2);
+    displayBalance = "$" + (floatBalance * price).toLocaleString();
   }
 
   return (
@@ -88,7 +88,7 @@ export default function Balance(props) {
         setDollarMode(!dollarMode);
       }}
     >
-      {displayBalance}
+      {displayBalance} <img src='https://assets.coingecko.com/coins/images/279/thumb/ethereum.png?1595348880' /> Ether
     </span>
   );
 }

@@ -1,16 +1,29 @@
 import React from "react";
-import { PageHeader } from "antd";
+import { PageHeader, Tag } from "antd";
 
 // displays a page header
 
 export default function Header() {
   return (
-    <a href="https://github.com/austintgriffith/scaffold-eth" target="_blank" rel="noopener noreferrer">
-      <PageHeader
-        title="🏗 scaffold-eth"
-        subTitle="forkable Ethereum dev stack focused on fast product iteration"
-        style={{ cursor: "pointer" }}
-      />
-    </a>
+    <PageHeader
+      title="👻 Aave"
+      subTitle="Liquidations with flash loans"
+      tags={
+        <>
+          <a href="https://aave.com/" target="_blank" rel="noopener noreferrer">
+            <Tag color="purple">Aave Website</Tag>
+          </a>
+          <a href="https://docs.aave.com/" target="_blank" rel="noopener noreferrer">
+            <Tag color="cyan">Aave Docs</Tag>
+          </a>
+          <a href="https://github.com/kartojal/flash-loans-workshop" target="_blank" rel="noopener noreferrer">
+            <Tag color="yellow">Github</Tag>
+          </a>
+          <a href="https://github.com/austintgriffith/scaffold-eth" target="_blank" rel="noopener noreferrer">
+            <Tag color="blue">Powered by 🏗 scaffold-eth</Tag>
+          </a>
+        </>
+      }
+    />
   );
 }
