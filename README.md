@@ -1,2 +1,33 @@
-# flash-loans-workshop
-This workshop serves an example about how to integrate Aave V2 flash loans,
+# Flash loans Workshop
+This workshop serves an example about how to integrate Aave V2 flash loan. 
+
+# Get started
+
+Open a terminal,clone this repository and Install dependencies
+
+```
+git clone git@github.com:kartojal/flash-loans-workshop.git
+
+cd flash-loans-workshop
+
+yarn
+```
+
+Open three terminals, and run the following in each terminal:
+```
+yarn start
+```
+
+```
+yarn chain
+```
+
+```
+yarn deploy
+```
+
+A browser should start pointing to http://localhost:3000 with a minimal frontend.
+
+
+## Made possible by
+This project uses [scaffold-eth](https://github.com/austintgriffith/scaffold-eth) for fast bootstrapping. Thanks @austintgriffith!
