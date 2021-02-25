@@ -1,6 +1,6 @@
 # Flash loans Workshop
 
-This workshop serves an example about how to integrate Aave V2 flash loan.
+This workshop serves an example about how to integrate Aave V2 flash loans to liquidate a loan from an unhealthy borrower position.
 
 # Get started
 
