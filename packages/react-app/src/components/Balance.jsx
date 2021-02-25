@@ -28,7 +28,6 @@ import { usePoller } from "eth-hooks";
   - Provide price={price} of ether and get your balance converted to dollars
 */
 
-
 export default function Balance(props) {
   const [dollarMode, setDollarMode] = useState(false);
   const [balance, setBalance] = useState();
@@ -70,7 +69,7 @@ export default function Balance(props) {
 
   let displayBalance = floatBalance.toLocaleString();
 
-  const price = props.price || props.dollarMultiplier
+  const price = props.price || props.dollarMultiplier;
 
   if (price && dollarMode) {
     displayBalance = "$" + (floatBalance * price).toLocaleString();
@@ -88,7 +87,7 @@ export default function Balance(props) {
         setDollarMode(!dollarMode);
       }}
     >
-      {displayBalance} <img src='https://assets.coingecko.com/coins/images/279/thumb/ethereum.png?1595348880' /> Ether
+      {displayBalance} <img src="https://assets.coingecko.com/coins/images/279/thumb/ethereum.png?1595348880" /> ETH
     </span>
   );
 }

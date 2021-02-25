@@ -2,20 +2,18 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-// Uniswap swaps adapter
+// Uniswap Adapter
 import {BaseUniswapAdapter} from '@aave/protocol-v2/contracts/adapters/BaseUniswapAdapter.sol';
 
 // Interfaces
-import {ILendingPoolAddressesProvider} from '@aave/protocol-v2/contracts/interfaces/ILendingPoolAddressesProvider.sol';
+import {
+  ILendingPoolAddressesProvider
+} from '@aave/protocol-v2/contracts/interfaces/ILendingPoolAddressesProvider.sol';
+import {ILendingPool} from '@aave/protocol-v2/contracts/interfaces/ILendingPool.sol';
 import {IUniswapV2Router02} from '@aave/protocol-v2/contracts/interfaces/IUniswapV2Router02.sol';
 import {IERC20} from '@aave/protocol-v2/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IPriceOracleGetter} from '@aave/protocol-v2/contracts/interfaces/IPriceOracleGetter.sol';
-import {IAToken} from '@aave/protocol-v2/contracts/interfaces/IAToken.sol';
 
-// Libraries
-import {DataTypes} from '@aave/protocol-v2/contracts/protocol/libraries/types/DataTypes.sol';
-import {Helpers} from '@aave/protocol-v2/contracts/protocol/libraries/helpers/Helpers.sol';
-import {ReserveConfiguration} from '@aave/protocol-v2/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title FlashLiquidationAdapter
@@ -24,9 +22,6 @@ import {ReserveConfiguration} from '@aave/protocol-v2/contracts/protocol/librari
  * @author Aave
  **/
 contract FlashLiquidationAdapter is BaseUniswapAdapter {
-  using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
-  uint256 internal constant LIQUIDATION_CLOSE_FACTOR_PERCENT = 5000;
-
   struct LiquidationParams {
     address collateralAsset;
     address borrowedAsset;
@@ -186,5 +181,32 @@ contract FlashLiquidationAdapter is BaseUniswapAdapter {
     ) = abi.decode(params, (address, address, address, uint256, bool));
 
     return LiquidationParams(collateralAsset, borrowedAsset, user, debtToCover, useEthPath);
+  }
+
+  function requestFlashLoan(
+    address[] calldata assets,
+    uint256[] calldata amounts,
+    uint256[] calldata modes,
+    bytes calldata params
+  ) external {
+    // Request a Flash Loan to Lending Pool
+    ILendingPool(LENDING_POOL).flashLoan(
+      address(this),
+      assets,
+      amounts,
+      modes,
+      address(this),
+      params,
+      0
+    );
+
+    LiquidationParams memory decodedParams = _decodeParams(params);
+
+    // Transfer the remaining collateral to the msg.sender
+    uint256 allBalance = IERC20(decodedParams.collateralAsset).balanceOf(address(this));
+    console.log(decodedParams.collateralAsset, allBalance);
+    IERC20(decodedParams.collateralAsset).transfer(msg.sender, allBalance);
+    uint256 userBalance = IERC20(decodedParams.collateralAsset).balanceOf(msg.sender);
+    console.log('user bal', userBalance);
   }
 }

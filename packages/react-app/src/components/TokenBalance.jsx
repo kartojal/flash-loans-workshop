@@ -7,6 +7,7 @@ export default function TokenBalance(props) {
 
   const tokenContract = props.contracts && props.contracts[props.name];
   const balance = useTokenBalance(tokenContract, props.address, 1777);
+  console.log("BALANCE", tokenContract, props.address, balance);
 
   let floatBalance = parseFloat("0.00");
 
@@ -22,10 +23,10 @@ export default function TokenBalance(props) {
     floatBalance = parseFloat(etherBalance);
   }
 
-  let displayBalance = floatBalance.toLocaleString('es-es');
+  let displayBalance = floatBalance.toLocaleString("es-es");
 
   if (props.dollarMultiplier && dollarMode) {
-    displayBalance = "$" + (floatBalance * props.dollarMultiplier).toLocaleString('es-es');
+    displayBalance = "$" + (floatBalance * props.dollarMultiplier).toLocaleString("es-es");
   }
 
   return (

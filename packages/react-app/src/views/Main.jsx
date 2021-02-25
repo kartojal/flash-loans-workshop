@@ -1,12 +1,12 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, List, Divider, Alert } from "antd";
 import { Address, Balance, TokenBalance } from "../components";
-import { formatEther } from "@ethersproject/units";
-import { Contract } from "@ethersproject/contracts";
+import { parseEther, formatEther } from "@ethersproject/units";
 import { DAI_ABI as ERC20_ABI, AAVE_LENDING_POOL_ABI, PROTOCOL_DATA_PROVIDER_ABI } from "../constants";
 import { useContractReader, useExternalContractLoader } from "../hooks";
+import { buildFlashLiquidationAdapterParams } from "../helpers/encoder";
 import { usePoller } from "eth-hooks";
 import styled from "styled-components";
 
@@ -16,6 +16,7 @@ const LINK_ATOKEN_ADDRESS = "0xa06bc25b5805d5f8d82847d191cb4af5a3e873e0";
 const LENDING_POOL_V2 = "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9";
 const POOL_DATA_PROVIDER_ADDRESS = "0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d";
 const iconStyle = { height: 24, width: 24 };
+
 // Prices  Feb-23-2021 09:01:06 AM +UTC for liquidation overview
 const assetData = {
   WETH: {
@@ -25,10 +26,13 @@ const assetData = {
   LINK: {
     price: 25.3,
     aTokenImg: "https://etherscan.io/token/images/Aave_aLINK_32.png",
+    address: "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+    img: "https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png?1547034700",
   },
   DAI: {
     price: 1,
     img: "https://assets.coingecko.com/coins/images/9956/small/dai-multi-collateral-mcd.png?1574218774",
+    address: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
   },
 };
 const loadReserves = async (userAddress, poolDataProvider) => {
@@ -77,8 +81,8 @@ const GridBox = styled.div`
   gap: 0px 0px;
   grid-template-areas: ". .";
 `;
-export default function ExampleUI({
-  purpose,
+
+export default function Main({
   setPurposeEvents,
   address,
   userProvider,
@@ -88,6 +92,7 @@ export default function ExampleUI({
   tx,
   writeContracts,
 }) {
+  const [initialLoad, setInitialLoad] = useState(true);
   const [userReserves, setUserReserves] = useState([]);
   const [userBorrowStable, setUserStable] = useState([]);
   const [userBorrowVariable, setUserVariable] = useState([]);
@@ -97,8 +102,7 @@ export default function ExampleUI({
     POOL_DATA_PROVIDER_ADDRESS,
     PROTOCOL_DATA_PROVIDER_ABI,
   );
-  const LINK_ATOKEN = useExternalContractLoader(localProvider, LINK_ATOKEN_ADDRESS, ERC20_ABI);
-  const DAI_DEBT_TOKEN = useExternalContractLoader(localProvider, DAI_STABLE_DEBT_TOKEN_ADDRESS, ERC20_ABI);
+  const LINK_TOKEN = useExternalContractLoader(localProvider, assetData.LINK.address, ERC20_ABI);
   const LendingPool = useExternalContractLoader(localProvider, LENDING_POOL_V2, AAVE_LENDING_POOL_ABI);
 
   const userAccountData = useContractReader(
@@ -113,7 +117,19 @@ export default function ExampleUI({
   const health = userAccountData?.length ? parseFloat(formatEther(userAccountData[5])) : 0;
   const alertType = health < 1 ? "error" : "success";
 
-  console.log("user Reserves", userReserves);
+  useEffect(() => {
+    const loadEffect = async () => {
+      const { aTokens, stables, variables } = await loadReserves(BORROWER_ADDRESS, POOL_DATA_PROVIDER);
+      setUserReserves(aTokens);
+      setUserStable(stables);
+      setUserVariable(variables);
+      setInitialLoad(false);
+    };
+
+    if (initialLoad && POOL_DATA_PROVIDER) {
+      loadEffect();
+    }
+  }, [initialLoad, POOL_DATA_PROVIDER]);
 
   usePoller(async () => {
     if (POOL_DATA_PROVIDER) {
@@ -122,7 +138,7 @@ export default function ExampleUI({
       setUserStable(stables);
       setUserVariable(variables);
     }
-  }, 3000);
+  }, 15000);
 
   return (
     <div>
@@ -181,7 +197,24 @@ export default function ExampleUI({
         <div style={{ margin: 8 }}>
           <Button
             onClick={() => {
-              // TODO TX
+              // Prepare params
+              const daiDebt = parseEther("838971");
+
+              const encodedParams = buildFlashLiquidationAdapterParams(
+                assetData.LINK.address,
+                assetData.DAI.address,
+                BORROWER_ADDRESS,
+                daiDebt,
+                true,
+              );
+              // Execute flash loan
+              const flashLoanParams = [
+                [assetData.DAI.address], // Asset to request flash loan
+                [daiDebt], // Amount of DAI to request
+                ["0"], // Flash loan mode type, 0 means no open a debt and revert if flash loan principal is not paid
+                encodedParams, // Encoded params
+              ];
+              tx(writeContracts.FlashLiquidationAdapter.requestFlashLoan(...flashLoanParams));
             }}
           >
             Liquidate Position ⚡
@@ -194,7 +227,31 @@ export default function ExampleUI({
         {/* use formatEther to display a BigNumber: */}
         <h2>Your Balance: </h2>
         <Balance address={address} provider={localProvider} price={price} />
+        <br />
+        <TokenBalance
+          contracts={{ LINK: LINK_TOKEN }}
+          name={"LINK"}
+          address={address}
+          provider={localProvider}
+          dollarMultiplier={assetData.LINK.price}
+          img={<img src={assetData.LINK.img} style={iconStyle} />}
+        />
         <Divider />
+        <Button
+          onClick={() => {
+            // Reset chain, keep in mind to deploy again via `yarn run deploy`.
+            localProvider.send("hardhat_reset", [
+              {
+                forking: {
+                  jsonRpcUrl: "https://eth-mainnet.alchemyapi.io/v2/h9TZx3zq0Ez_nNRahgbLy3X2cQTmHwnW",
+                  blockNumber: 11912352,
+                },
+              },
+            ]);
+          }}
+        >
+          Revert Chain
+        </Button>
       </div>
 
       <div style={{ width: 600, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
