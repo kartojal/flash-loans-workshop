@@ -17,10 +17,6 @@ yarn
 Open three terminals, and run the following in each terminal:
 
 ```
-yarn start
-```
-
-```
 ALCHEMY_RPC="YOUR ALCHEMY RPC URL" yarn fork
 ```
 
@@ -28,7 +24,14 @@ ALCHEMY_RPC="YOUR ALCHEMY RPC URL" yarn fork
 yarn deploy
 ```
 
-A browser should start pointing to http://localhost:3000 with a minimal frontend.
+Check the first terminal after the deploy command, and wait until the Hardhat node loads all the state for the fork environment, could take some minutes. Once the node terminal stops syncing data and the logs are paused, them run the frontend with the following command:
+
+```
+yarn start
+```
+
+
+A browser should start pointing to http://localhost:3000 with a minimal frontend and with a pre-loaded wallet.
 
 ## Made possible by
 
